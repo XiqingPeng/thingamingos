@@ -103,7 +103,7 @@ function harness(initialActor = 'a') {
   };
   vm.createContext(context);
   vm.runInContext(source + `\nglobalThis.actions={refresh,openCreate,openScene,openRespond,closeModal,
-    select(id){selected=id;},inspect(){return {actorId,state,selected,view,pendingRender,busy,switching,scenePending,playback:player.snapshot(),returnSceneKey};}};`, context);
+    select(id){selected=id;},inspect(){return {actorId,state,selected,view,pendingRender,busy,switching,scenePending,pickingCompanions,collectionPicks,playback:player.snapshot(),returnSceneKey};}};`, context);
   const snapshot = actor => publicState(seed(), actor, room);
   const respond = (request, body, status = 200) => request.resolve({ ok: status < 400, status, json: async () => body });
   const take = path => {
@@ -513,4 +513,44 @@ test('legacy scene translation arriving after another language choice is cached 
   assert.equal(getLanguage(),'zh');assert.equal(h.actions.inspect().playback.visibleCount,count);assert.doesNotMatch(h.app.innerHTML,/<p>I would love to hear your side/);
   h.click('language',{language:'en'});assert.equal(h.pending.length,0);assert.match(h.app.innerHTML,/<p>I would love to hear your side/);assert.equal(h.actions.inspect().playback.visibleCount,count);
  }finally{setLanguage('zh');}
+});
+
+
+test('collection multi-selection carries exactly the chosen companions into the scene', async()=>{
+ const h=harness();await h.boot();h.click('pick-mode');h.click('pick-companion',{id:'cup'});h.click('pick-companion',{id:'keys'});
+ assert.deepEqual(Array.from(h.actions.inspect().collectionPicks),['cup','keys']);assert.match(h.app.innerHTML,/aria-pressed="true"/);assert.match(h.app.innerHTML,/已选 2\/3/);
+ h.click('scene-picked');assert.deepEqual(h.modal.form.checks.filter(input=>input.checked).map(input=>input.value),['cup','keys']);
+ const cup=h.modal.form.checks.find(input=>input.value==='cup');cup.checked=false;await h.handlers.change[0]({target:cup});h.actions.closeModal();
+ assert.deepEqual(Array.from(h.actions.inspect().collectionPicks),['keys']);assert.match(h.app.innerHTML,/已选 1\/3/);
+});
+
+test('collection selection limits three, allows replacing and keeps ordinary memory viewing separate', async()=>{
+ const h=harness(),state=h.snapshot('a');state.objects.push({...state.objects[0],id:'four',name:'晚安灯'});h.respond(h.take('/api/state'),state);await tick();
+ h.click('pick-mode');for(const id of ['cup','keys','leaf'])h.click('pick-companion',{id});h.click('pick-companion',{id:'four'});
+ assert.deepEqual(Array.from(h.actions.inspect().collectionPicks),['cup','keys','leaf']);assert.match(h.toast.textContent,/最多选择三位/);
+ h.click('pick-remove',{id:'keys'});h.click('pick-companion',{id:'four'});h.click('pick-mode');h.click('select',{id:'keys'});
+ assert.equal(h.actions.inspect().selected,'keys');assert.equal(h.actions.inspect().pickingCompanions,false);
+ h.actions.openScene();assert.deepEqual(h.modal.form.checks.filter(input=>input.checked).map(input=>input.value),['cup','leaf','four']);
+});
+
+test('multi-selection survives collection search, pagination and language changes without translating names', async()=>{
+ const h=harness(),state=h.snapshot('a');for(let i=3;i<10;i++)state.objects.push({...state.objects[0],id:'item'+i,name:i===3?'清除选择小伙伴':'伙伴'+i});h.respond(h.take('/api/state'),state);await tick();
+ try{
+  h.click('pick-mode');h.click('pick-companion',{id:'cup'});h.handlers.input[0]({target:{id:'collection-query',value:'清除选择小伙伴'}});h.click('pick-companion',{id:'item3'});
+  h.handlers.input[0]({target:{id:'collection-query',value:''}});h.click('library-next');h.click('pick-companion',{id:'item7'});
+  assert.deepEqual(Array.from(h.actions.inspect().collectionPicks),['cup','item3','item7']);
+  h.click('language',{language:'en'});assert.match(h.app.innerHTML,/Done selecting/);assert.match(h.app.innerHTML,/Selected 3\/3/);assert.match(h.app.innerHTML,/清除选择小伙伴/);assert.match(h.app.innerHTML,/Start a scene together/);
+  h.click('scene-picked');assert.deepEqual(h.modal.form.checks.filter(input=>input.checked).map(input=>input.value),['cup','item3','item7']);
+ }finally{setLanguage('zh');}
+});
+
+test('clearing selection and a room refresh do not resurrect removed companions',async()=>{
+ const h=harness();await h.boot();h.click('pick-mode');h.click('pick-companion',{id:'keys'});h.click('pick-companion',{id:'leaf'});
+ const state=h.snapshot('a');state.objects=state.objects.filter(o=>o.id!=='keys');const refreshing=h.actions.refresh();h.respond(h.take('/api/state'),state);await refreshing;
+ assert.deepEqual(Array.from(h.actions.inspect().collectionPicks),['leaf']);h.click('pick-clear');assert.equal(h.actions.inspect().collectionPicks.length,0);h.click('scene-picked');assert.equal(h.modal.open,false);assert.match(h.toast.textContent,/至少一位/);
+});
+
+test('switching accounts clears the collection cast draft',async()=>{
+ const h=harness();await h.boot();h.click('pick-mode');h.click('pick-companion',{id:'cup'});const switching=h.switchActor('b');h.respond(h.take('/api/session'),{ok:true});await tick();h.respond(h.take('/api/state'),h.snapshot('b'));await switching;
+ assert.equal(h.actions.inspect().collectionPicks.length,0);assert.equal(h.actions.inspect().pickingCompanions,false);
 });

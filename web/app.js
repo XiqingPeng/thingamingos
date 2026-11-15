@@ -32,6 +32,7 @@ const art = (kindOrObj, cls='') => {
 };
 let state, selected='cup', view='home', filter='all', busy=false, switching=false, lastState='', previewUrl, pixelPreviewUrl, currentPixelFile=null, pixelConverting=false, pixelJobId=0;
 let modalGeneration=0, pendingRender=false, scenePending=false;
+let pickingCompanions=false, collectionPicks=[], sceneSelectionFromCollection=false;
 let rendering=false, returnSceneKey=null, lastAnnouncement='';
 const translationCache=new Map(), translationStatus=new Map();
 const player=createScenePlayer({onChange:updatePlaybackView});
@@ -103,6 +104,8 @@ async function refresh(silent=false,playbackRequest=null) {
  applyTranslationCache(next.latest_scene);
  const serialized=JSON.stringify(next);
  if(silent && serialized===lastState && !playbackRequest)return true;
+ if(state?.current_user_id!==next.current_user_id){pickingCompanions=false;collectionPicks=[];}
+ else collectionPicks=collectionPicks.filter(id=>next.objects.some(o=>o.id===id));
  state=next;lastState=serialized;actorId=state.current_user_id;sessionStorage.setItem('object-stories-user',actorId);
  if(!object(selected)) selected=state.objects[0]?.id;
  rendering=true;
@@ -159,10 +162,33 @@ function memoryMarkup(m,full=false) {
  const obj=object(m.object_id);
  return ui`<article class="memory-item" id="memory-${esc(m.id)}"><div class="memory-top"><span class="memory-type"><span class="dot"></span>${esc(types[m.kind]||t('共同经历'))}${full?ui` · ${esc(obj?.name||t('物品'))}`:''}</span><span class="status ${esc(m.status)}">${statuses[m.status]}</span></div><p>${esc(m.text)}</p><div class="memory-meta"><span>${esc(user(m.author_id).name)} 记下</span>${m.tagged_user_id?ui`<span>·</span><span class="person-tag">@${esc(user(m.tagged_user_id).name)}</span>`:''}<span>· ${new Date(m.created_at).toLocaleDateString(locale(),{month:'numeric',day:'numeric'})}</span></div>${m.response?ui`<div class="response">${esc(user(m.tagged_user_id).name)}：${esc(m.response)}</div>`:''}${m.tagged_user_id===state.current_user_id&&m.status==='pending'?ui`<div class="response-actions"><button data-action="respond" data-id="${esc(m.id)}">回应这段记忆 ↗</button></div>`:''}${m.author_id===state.current_user_id?ui`<div class="memory-actions"><button data-action="edit-memory" data-id="${esc(m.id)}">修改</button><button data-action="forget" data-id="${esc(m.id)}">让它忘记</button></div>`:''}</article>`;
 }
+function selectedCompanions(){
+ collectionPicks=[...new Set(collectionPicks)].filter(id=>state.objects.some(o=>o.id===id)).slice(0,3);
+ return collectionPicks;
+}
 function collectionMarkup(){
  const page=collectionPage(state.objects,libraryQuery,libraryPage);libraryPage=page.page;
- return ui`<section class="shelf-grid" aria-label="物品列表">${page.items.map(o=>ui`<button class="object-card ${o.id===selected?'active':''}" title="${esc(o.name)}" data-action="select" data-id="${esc(o.id)}"><span class="selected-mark">✓</span>${art(o,'mini-art')}<h3>${esc(o.name)}</h3><div class="object-type">${esc(o.object_type||({mug:t('杯子'),keyboard:t('键盘'),plant:t('植物'),other:t('其他物品')}[o.kind]))}</div><p>${esc(o.personality)}</p><div class="memory-total">${icon('memory')}${counts(o.id)} 段记忆 · ${esc(user(o.owner_id).name)}的小伙伴</div></button>`).join('')}</section>${!page.total?t('<p class="empty">没有找到匹配的物品</p>'):''}<div class="collection-pager"><button class="secondary" data-action="library-prev" ${page.page===0?'disabled':''}>← 上一页</button><span>${page.page+1} / ${page.pages} · ${page.total}</span><button class="secondary" data-action="library-next" ${page.page+1>=page.pages?'disabled':''}>下一页 →</button></div>`;
+ const picked=selectedCompanions();
+ return ui`<div class="companion-selection"><div class="companion-selection-top"><button class="secondary" data-action="pick-mode">${pickingCompanions?t('完成选择'):t('多选伙伴')}</button><span class="companion-count" role="status" aria-live="polite">${t('已选')} ${picked.length}/3</span>${pickingCompanions||picked.length?ui`<button class="text-button" data-action="pick-clear" ${!picked.length?'disabled':''}>清除选择</button><button class="primary" data-action="scene-picked" ${!picked.length||scenePending?'disabled':''}>${icon('play')}${scenePending?t('物品们正在酝酿对话…'):t('一起开剧场')}</button>`:''}</div>${pickingCompanions?ui`<p class="companion-selection-hint">点选卡片，最多三位；完成选择后可继续查看记忆。</p>`:''}${picked.length?ui`<div class="picked-companions" role="group" aria-label="已选剧场伙伴">${picked.map(id=>ui`<button class="picked-companion" data-action="pick-remove" data-id="${esc(id)}" aria-label="${esc(t('取消选择：')+object(id).name)}"><span>${esc(object(id).name)}</span><span aria-hidden="true">×</span></button>`).join('')}</div>`:''}</div><section class="shelf-grid ${pickingCompanions?'picking-companions':''}" aria-label="物品列表">${page.items.map(o=>ui`<button class="object-card ${o.id===selected?'active':''} ${pickingCompanions?'picking':''} ${picked.includes(o.id)?'scene-picked':''}" title="${esc(o.name)}" data-action="${pickingCompanions?'pick-companion':'select'}" data-id="${esc(o.id)}" ${pickingCompanions?ui`aria-pressed="${picked.includes(o.id)}" aria-label="${esc(t('选择参加剧场：')+o.name)}"`:''}><span class="selected-mark" aria-hidden="true">✓</span>${art(o,'mini-art')}<h3>${esc(o.name)}</h3><div class="object-type">${esc(o.object_type||({mug:t('杯子'),keyboard:t('键盘'),plant:t('植物'),other:t('其他物品')}[o.kind]))}</div><p>${esc(o.personality)}</p><div class="memory-total">${icon('memory')}${counts(o.id)} 段记忆 · ${esc(user(o.owner_id).name)}的小伙伴</div></button>`).join('')}</section>${!page.total?t('<p class="empty">没有找到匹配的物品</p>'):''}<div class="collection-pager"><button class="secondary" data-action="library-prev" ${page.page===0?'disabled':''}>← 上一页</button><span>${page.page+1} / ${page.pages} · ${page.total}</span><button class="secondary" data-action="library-next" ${page.page+1>=page.pages?'disabled':''}>下一页 →</button></div>`;
 }
+function updateCollection(focusAction,id){
+ const region=$('#collection-region');
+ if(!region){render();return;}
+ region.innerHTML=collectionMarkup();
+ if(focusAction){
+  const target=[...region.querySelectorAll('[data-action]')].find(el=>el.dataset.action===focusAction&&(id===undefined||el.dataset.id===id));
+  target?.focus({preventScroll:true});
+ }
+}
+function toggleCompanion(id){
+ if(!pickingCompanions||!object(id))return;
+ const picked=selectedCompanions();
+ if(picked.includes(id))collectionPicks=picked.filter(value=>value!==id);
+ else if(picked.length<3)collectionPicks=[...picked,id];
+ else{notice(t('最多选择三位，请先取消一位再换人'));return;}
+ updateCollection('pick-companion',id);
+}
+
 function homeMarkup() {
  const current=object(selected);
  const cast=roomCast(state.objects,roomPage).items;
@@ -224,7 +250,8 @@ function openRespond(id) {
  modal(t('你也记得这件事吗？'),ui`${user(m.author_id).name}在${object(m.object_id)?.name}的故事里标注了你。`,ui`<input type="hidden" name="memory_id" value="${esc(id)}"><input type="hidden" name="expected_revision" value="${m.revision??1}"><div class="story-context">${esc(m.text)}</div><label class="form-field"><span>补上你的版本（选填）</span><textarea name="response" maxlength="600" placeholder="比如，那天挑了很久，希望它能多陪你几年。"></textarea></label><label class="form-field"><span>这段故事的状态</span><select name="action"><option value="confirm">我记得，确认这段故事</option><option value="decline">我有不同记忆，暂不确认</option></select></label>`,'respond-form',t('留下我的回应'));
 }
 function openScene() {
- const defaults=defaultSceneIds(state.objects,selected);
+ const picked=selectedCompanions();sceneSelectionFromCollection=pickingCompanions||picked.length>0;
+ const defaults=sceneSelectionFromCollection?picked:defaultSceneIds(state.objects,selected);
  modal(t('让小屋热闹一会儿'),t('选好伙伴和话题，听它们一人一句慢慢聊。'),ui`<div class="field-label">谁来参加？</div><div class="scene-picks">${state.objects.map(o=>ui`<label class="scene-pick"><input type="checkbox" name="object_ids" value="${esc(o.id)}" ${defaults.includes(o.id)?'checked':''}>${art(o)}${esc(o.name)}</label>`).join('')}</div><p class="scene-selection-status form-hint" role="status" aria-live="polite"></p><label class="form-field"><span>今天聊什么？</span><input name="topic" maxlength="80" placeholder="比如，关于那份一直留着的礼物" value="那些舍不得换掉的小东西"></label><p class="form-hint">准备好后自动逐句开场，每句留出阅读时间。随时可以暂停、下一句或立即看完；引用的记忆可以点开查看。</p><p class="small-note">${t('新对话将使用当前语言，已保存的故事保留原文。')}</p><p class="scene-generation-status" role="status" aria-live="polite"></p>`,'scene-form',t('让它们开口'));
  updateSceneSelection();
 }
@@ -232,6 +259,7 @@ function updateSceneSelection(changed) {
  const inputs=[...$('#modal').querySelectorAll('[name="object_ids"]')];
  if(changed && inputs.filter(input=>input.checked).length>3){changed.checked=false;notice(t('最多选择三位，请先取消一位再换人'));}
  const count=inputs.filter(input=>input.checked).length;
+ if(changed&&sceneSelectionFromCollection){collectionPicks=inputs.filter(input=>input.checked).map(input=>input.value);pendingRender=true;}
  for(const input of inputs)input.disabled=count>=3&&!input.checked;
  const status=$('.scene-selection-status',$('#modal'));
  if(status)status.textContent=ui`已选 ${count}/3 位${count===3?t('，先取消一位即可换人'):''}`;
@@ -245,6 +273,7 @@ function setScenePending(value,form) {
  for(const button of document.querySelectorAll('[data-action="scene"]')){
   button.disabled=value;button.innerHTML=icon('play')+(value?t('物品们正在酝酿对话…'):t('开一场小剧场'));
  }
+ for(const button of document.querySelectorAll('[data-action="scene-picked"]')){button.disabled=value||!collectionPicks.length;button.innerHTML=icon('play')+(value?t('物品们正在酝酿对话…'):t('一起开剧场'));}
  form.setAttribute('aria-busy',String(value));
  const progress=$('.scene-generation-status',form);
  if(progress)progress.textContent=value?t('物品们正在酝酿对话…'):'';
@@ -281,10 +310,15 @@ document.addEventListener('click',e=>{
   const link=location.origin+'/?room='+roomKey;
   modal(t('把小屋链接交给朋友'),t('拿到链接的人可以进入这个演示小屋。可用不同浏览器体验多人互动。'),ui`<label class="form-field"><span>共享小屋链接</span><input readonly value="${esc(link)}" aria-label="共享小屋链接"></label><p class="small-note">朋友注册或登录后，可以通过此链接加入小屋，再回应被标注的故事。</p>`);
  }
+ if(action==='pick-mode'){pickingCompanions=!pickingCompanions;updateCollection('pick-mode');return;}
+ if(action==='pick-companion'){toggleCompanion(id);return;}
+ if(action==='pick-clear'){collectionPicks=[];updateCollection('pick-mode');return;}
+ if(action==='pick-remove'){collectionPicks=selectedCompanions().filter(value=>value!==id);updateCollection('pick-mode');return;}
+ if(action==='scene-picked'){if(scenePending){notice(t('物品们正在酝酿对话…'));return;}if(!selectedCompanions().length){notice(t('请先选择至少一位伙伴'));return;}openScene();return;}
  if(action==='create')openCreate();
  if(action==='select'){selected=id;roomPage=Math.floor(Math.max(0,state.objects.findIndex(o=>o.id===id))/3);render();}
  if(action==='room-next'){roomPage=roomCast(state.objects,roomPage+1).page;selected=roomCast(state.objects,roomPage).items[0]?.id;render();}
- if(action==='library-prev'||action==='library-next'){libraryPage+=action==='library-next'?1:-1;$('#collection-region').innerHTML=collectionMarkup();}
+ if(action==='library-prev'||action==='library-next'){libraryPage+=action==='library-next'?1:-1;updateCollection(action);}
  if(action==='add-memory')openMemory();
  if(action==='edit-memory')openMemory(id);
  if(action==='respond')openRespond(id);
@@ -301,7 +335,7 @@ document.addEventListener('click',e=>{
   const o=object(id);modal(o.name,[o.object_type,o.personality].filter(Boolean).join(' · '),ui`${o.media_type?.startsWith('video')?ui`<video class="media-view" src="${esc(o.media_url)}" controls playsinline></video>`:o.pixel_media_url&&o.media_url?ui`<div class="detail-compare"><div><span class="detail-tag">像素效果</span><img class="media-view pixel-sprite-art" src="${esc(o.pixel_media_url)}" alt="${esc(o.name)}"></div><div><span class="detail-tag">原图对比</span><img class="media-view" src="${esc(o.media_url)}" alt="${esc(o.name)}"></div></div>`:o.media_url?ui`<img class="media-view" src="${esc(o.media_url)}" alt="${esc(o.name)}">`:art(o,'detail-art')}<p class="small-note">物品的经历来自用户记录，照片和视频用于呈现它的样子。</p>`);
  }
 });
-document.addEventListener('input',e=>{if(e.target.id==='collection-query'){libraryQuery=e.target.value;libraryPage=0;$('#collection-region').innerHTML=collectionMarkup();}});
+document.addEventListener('input',e=>{if(e.target.id==='collection-query'){libraryQuery=e.target.value;libraryPage=0;updateCollection();}});
 document.addEventListener('change',async e=>{
  if(e.target.id==='user-select'){
   const previous=state.current_user_id,next=e.target.value;
@@ -439,7 +473,7 @@ function authError(code,message){
  return t(messages[code]||'操作未完成，请检查输入后重试');
 }
 function showAuth(){
- player.reset();requests.switchActor('signed-out');actorId='signed-out';state=null;lastState='';
+ player.reset();requests.switchActor('signed-out');actorId='signed-out';state=null;lastState='';collectionPicks=[];pickingCompanions=false;
  if($('#modal').open)closeModal();
  const register=authTab==='register';
  $('#app').innerHTML=ui`<main class="auth-shell"><section class="auth-art"><div class="auth-brand">✿ thingamingos</div><div><p class="eyebrow">LITTLE THINGS, BIG STORIES</p><h1>小东西，<br>也有大心事。</h1><p>把日常收进小屋，让它们记住你们的故事。</p></div></section><section class="auth-panel"><div class="auth-language">${languageMarkup()}<span class="room-sound-host" data-room-sound></span><button class="text-button install-entry" data-action="install">${t('添加到桌面')}</button></div><div class="auth-card"><span class="eyebrow">YOUR LITTLE CORNER</span><h2>${register?t('创建账号'):t('欢迎回到小屋')}</h2><p class="small-note">${t('用一个账号，收好你与物品的故事。')}</p><div class="auth-tabs"><button data-action="auth-tab" data-tab="login" aria-pressed="${!register}">${t('登录')}</button><button data-action="auth-tab" data-tab="register" aria-pressed="${register}">${t('注册')}</button></div><form id="auth-form">${register?ui`<label class="form-field"><span>昵称</span><input name="name" required maxlength="30" autocomplete="nickname" placeholder="你的名字"></label>`:''}<label class="form-field"><span>邮箱</span><input name="email" type="email" required maxlength="254" autocomplete="email" placeholder="you@example.com"></label><label class="form-field"><span>密码</span><input name="password" type="password" required minlength="8" maxlength="128" autocomplete="${register?'new-password':'current-password'}" placeholder="至少八位字符"></label><div class="inline-error" role="alert"></div><button class="primary" type="submit">${register?t('注册并进入小屋'):t('登录并进入小屋')}</button></form><p class="small-note">${t('朋友分享的小屋链接会在登录后自动加入。')}</p></div></section></main>`;

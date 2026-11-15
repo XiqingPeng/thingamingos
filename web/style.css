@@ -499,3 +499,20 @@ button,input,textarea,select,.brand,.eyebrow,.room-badge{font-family:var(--font)
 
 html[lang="en-US"] .nav button{font-size:14px}
 @media(max-width:700px){html[lang="en-US"] .nav button{font-size:12px}}
+
+/* Explicit collection multi-selection keeps ordinary card viewing unchanged. */
+.companion-selection{margin:0 0 16px;min-width:0}
+.companion-selection-top{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.companion-selection-top>button{min-height:44px}
+.companion-count{font-size:14px;white-space:nowrap;color:#5c6e40}
+.companion-selection-top>.primary{margin-left:auto}
+.companion-selection-hint{font-size:13px;line-height:1.7;color:#796441;margin:10px 0 0}
+.picked-companions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-width:0}
+.picked-companion{display:inline-flex;align-items:center;gap:10px;min-height:40px;min-width:0;max-width:100%;border:2px solid #728c46;background:#edf2d7;color:#3d592c;padding:6px 10px;font-size:14px;text-align:left}
+.picked-companion>span:first-child{min-width:0;overflow-wrap:anywhere}
+.picked-companion>span:last-child{flex-shrink:0}
+.object-card.picking{border-color:#cfa063;background:#fffbf0}
+.object-card.picking .selected-mark{width:22px;height:22px;line-height:18px;border:2px solid #ac915e;background:#fff8df;color:transparent}
+.object-card.picking.scene-picked{border-color:#587b37;background:#eff3d9;box-shadow:3px 3px #a9bc7b}
+.object-card.picking.scene-picked .selected-mark{background:#507433;color:#fff6ce;border-color:#365123}
+.object-card.picking h3{padding-right:16px}

@@ -322,6 +322,15 @@ AI 生成 · LLM|AI-generated · LLM
 回到小屋后继续播放。|The music will continue when you return.
 正在播放：午后的小屋|Now playing: An Afternoon at Home
 只保留点击声。|Only click sounds are on.
+多选伙伴|Select companions
+完成选择|Done selecting
+清除选择|Clear selection
+一起开剧场|Start a scene together
+点选卡片，最多三位；完成选择后可继续查看记忆。|Select up to three cards. Finish selecting to view memories again.
+已选剧场伙伴|Selected scene companions
+取消选择：|Remove from selection: 
+选择参加剧场：|Choose for the scene: 
+请先选择至少一位伙伴|Choose at least one companion first.
 `;
 export const dictionary=Object.fromEntries(entries.trim().split('\n').filter(Boolean).map(line=>{const at=line.indexOf('|');return [line.slice(0,at),line.slice(at+1)];}));
 const escapeRE=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');

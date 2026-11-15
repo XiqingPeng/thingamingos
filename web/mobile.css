@@ -45,3 +45,14 @@ html.device-preview{scrollbar-width:none}html.device-preview::-webkit-scrollbar{
  .pixel-style-options{flex-direction:column}
  .pixel-style-chip{min-height:42px;font-size:13px}
 }
+
+@media(max-width:700px){
+ .companion-selection-top{gap:8px}
+ .companion-selection-top>.secondary{padding:8px 10px;font-size:12px}
+ .companion-selection-top>.primary{width:100%;margin-left:0;min-height:46px;font-size:14px}
+ .companion-selection-top>.text-button{margin-left:auto;font-size:12px}
+ .companion-count{font-size:12px}
+ .companion-selection-hint{font-size:12px;line-height:1.7}
+ .picked-companion{min-height:44px;font-size:13px}
+ .object-card.picking .selected-mark{top:9px;right:9px}
+}
