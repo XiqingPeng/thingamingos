@@ -1,0 +1,25 @@
+{
+  "voices": [
+    {"id":"tsundere","terms":["嘴硬心软","嘴硬","傲娇","tsundere"],"mood":"嘴硬心软","opening":"哼，我可不是特意翻出记忆的。","stance":"别误会，我只是有点在意{focus}。","invite":"就问一句："},
+    {"id":"warm","terms":["温柔","体贴","重感情","善解人意","温暖","gentle","caring","warm"],"mood":"温柔惦念","opening":"我把声音放轻一点，陪你慢慢聊。","stance":"我想好好珍惜{focus}。","invite":"如果你愿意，我们一起想想："},
+    {"id":"analytical","terms":["理性","严谨","认真","一本正经","逻辑","冷静","analytical","logical","rational","serious"],"mood":"认真琢磨","opening":"先把记录和我的想法分开说。","stance":"我想理清{focus}，再讨论下一步。","invite":"我们把问题说具体一点："},
+    {"id":"playful","terms":["活泼","幽默","调皮","爱吐槽","吐槽","搞笑","俏皮","playful","funny","witty","lively"],"mood":"俏皮发言","opening":"叮！物品发言时间到，我先抢个话筒。","stance":"我要给{focus}留一个特别席位！","invite":"来，给想象力加个小任务："},
+    {"id":"calm","terms":["慢悠悠","慢性子","佛系","悠闲","淡定","calm","relaxed","slow"],"mood":"慢慢道来","opening":"别急，我慢慢说，你慢慢听。","stance":"我想留点时间，慢慢看看{focus}。","invite":"不用马上回答："},
+    {"id":"shy","terms":["害羞","内向","安静","腼腆","胆小","shy","quiet","introverted"],"mood":"轻声开口","opening":"那个……我也想轻轻说两句。","stance":"关于{focus}，我有一点小小的在意。","invite":"可以悄悄告诉我吗："},
+    {"id":"curious","terms":["好奇","爱问","求知","探索","curious","inquisitive"],"mood":"好奇追问","opening":"我有个问题，想从记忆里找找线索。","stance":"我最想弄明白{focus}。","invite":"我还想追问一步："},
+    {"id":"optimistic","terms":["乐观","乐天","开朗","积极","optimistic","cheerful","upbeat"],"mood":"期待后续","opening":"我已经给故事的下一页留好位置啦。","stance":"我期待{focus}能长出新的可能。","invite":"一起想个值得期待的下一步吧："}
+  ],
+  "neutral":{"id":"neutral","mood":"认真倾听","opening":"我想从你亲口留下的记录聊起。","stance":"我想听听你怎么看{focus}。","invite":"让我问一个问题："},
+  "topics":[
+    {"id":"gift","terms":["礼物","赠送","送给","送我","送的","生日","毕业","心意","gift","present","birthday","graduation"],"kind":"gift","focus":"礼物背后的心意","question":"如果要再次表达这份心意，你想用什么方式？"},
+    {"id":"work","terms":["工作","加班","下班","熬夜","赶工","截止","敲字","改字","改一个字","键盘","work","overtime","deadline","office"],"focus":"忙碌和休息之间的分寸","question":"下一次忙起来时，我们约定一个怎样的休息信号？"},
+    {"id":"outdoors","terms":["公园","晒太阳","散步","户外","野餐","阳光","park","sunshine","picnic","outdoors","walk"],"focus":"给日常留一点户外的时间","question":"如果下次能一起出门，你想选哪里、做什么？"},
+    {"id":"travel","terms":["旅行","旅游","旅途","出游","远方","相机","拍照","照片","合照","travel","trip","camera","photo"],"focus":"旅途中想留下的片刻","question":"下一次出发，你最想把哪个瞬间留成照片？"},
+    {"id":"growth","terms":["成长","长大","新叶","发芽","植物","浇水","盆栽","绿萝","grow","growth","plant","leaf"],"focus":"一点点发生的变化","question":"接下来你想留意哪一个小变化，又准备怎样照顾它？"},
+    {"id":"promise","terms":["约定","答应","承诺","计划","说好","promise","plan","agreement"],"kind":"promise","focus":"约定接下来怎么落实","question":"为了让约定往前走，最小的一步可以是什么？"},
+    {"id":"company","terms":["陪伴","舍不得","换掉","老朋友","一直","珍惜","回忆","怀念","陪我","company","companionship","nostalgia","friendship"],"focus":"陪伴为什么值得珍惜","question":"如果只留下一句话给未来的我们，你想写什么？"}
+  ],
+  "stop_phrases":["今天有什么想对我们说的","今天","关于","聊一聊","聊聊","说一说","说说","聊什么","有什么","为什么","怎么样","我们","你们","它们","这个","那个","这些","那些","一下","事情","物品","小东西"],
+  "stop_words":["a","an","and","are","about","the","this","that","of","to","is","it","in","on","we","our","you","your","today","tell","talk","me","what","how","why"],
+  "default_question":"围绕「{topic}」，你最想补充哪件具体的小事？"
+}

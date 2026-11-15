@@ -1,0 +1,16 @@
+*
+!web/
+!web/**
+!lib/
+!lib/**
+!api/
+!api/**
+!server.js
+!package.json
+!package-lock.json
+!Dockerfile
+.env*
+**/.env*
+**/*.log
+**/*.sqlite*
+**/.auth-secret

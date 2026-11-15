@@ -1,0 +1,39 @@
+# Runtime state, uploads and generated exports
+/data/
+/uploads/
+/media/
+/releases/
+*.zip
+*.log
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.db
+*.db-*
+.auth-secret
+runtime.env
+
+# Credentials and machine-specific configuration
+.env
+.env.*
+!.env.example
+.vercel/
+.npmrc
+.netrc
+.ssh/
+*.pem
+*.key
+.node-path
+.DS_Store
+
+# Installed dependencies and caches
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Internal project handoff material
+/AGENTS.md
+/docs/HANDOFF.md

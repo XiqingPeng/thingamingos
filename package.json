@@ -1,0 +1,21 @@
+{
+  "name": "object-stories-pixel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check web/app.js && node --check api/index.js && node --check lib/accounts.js && node --check lib/account-api.js && node --check server.js",
+    "preview": "node server.js"
+  },
+  "dependencies": {
+    "@ai-sdk/deepseek": "3.0.87",
+    "@vercel/blob": "2.9.0",
+    "ai": "7.0.173",
+    "better-auth": "1.7.25",
+    "pg": "8.23.1"
+  }
+}
