@@ -69,6 +69,8 @@ npm run preview
 
 默认账号、记忆和上传素材保存在本机 `data/accounts-preview/`，不进入版本库。
 
+默认本地预览使用 SQLite，正式账号版使用 PostgreSQL，账号和数据分别保存。首次访问正式网站时，请在该站选择“注册”创建普通账号；本地预览账号不会自动同步到正式网站。
+
 ```sh
 npm run check
 npm test
